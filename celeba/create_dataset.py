@@ -168,7 +168,7 @@ def filter_images_by_attribute(data_dir, attr1=None, attr2=None, present1=True, 
     return image_ids
 
 data_dir = './celeba_data/'
-# download_extract('celeba', data_dir)
+download_extract('celeba', data_dir)
 
 random.seed(0)
 
@@ -205,7 +205,7 @@ bg_ids = filter_images_by_attribute(
 )
 
 df = pd.read_csv(os.path.join(data_dir, 'list_attr_celeba.csv'))
-path = '/home/robin/Desktop/rl264746/celeba_data/img_align_celeba/'
+path = './celeba_data/img_align_celeba/'
 
 ids = df["File_name"].tolist()
 sex = df["Male"].tolist()

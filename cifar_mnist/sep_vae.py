@@ -11,6 +11,13 @@ from torch.utils.data import DataLoader
 from cnn_model import Encoder, Decoder, Classifier, FactorClassifier
 from dataset import CifarMNISTDataset
 
+
+
+device_cpu = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
+
+
+
 # Dataset de CIFAR
 from keras.datasets import cifar10
 
@@ -164,8 +171,10 @@ def train(epoch, vae, optimizer, factor_optimizer):
     vae.train()
     train_loss = 0
     for batch_idx, (data, _, _, y) in enumerate(train_loader):
-        data = data.cuda()
-        y = y.cuda()
+        data = data.to(device_cpu)
+
+        y = y.to(device_cpu)
+
 
         # independent optimizer training
         factor_optimizer.zero_grad()
@@ -210,8 +219,10 @@ def test(vae):
     vae.eval()
     with torch.no_grad():
         for data, _, _, y in test_loader:
-            data = data.cuda()
-            y = y.cuda()
+            data = data.to(device_cpu)
+
+            y = y.to(device_cpu)
+
 
             reconstructed_x, z_mean, z_log_var, y_pred, z = vae(data, y)
 
@@ -253,13 +264,15 @@ def test_linear_probe(vae):
         y_digit_train = []
         y_digit_test = []
         for data, y, y_digit, _ in train_loader:
-            data = data.cuda()
+            data = data.to(device_cpu)
+
             mean, _, _ = vae.inference(data)
             X_train_mu.extend(mean.cpu().numpy())
             y_train.extend(y.cpu().numpy())
             y_digit_train.extend(y_digit.cpu().numpy())
         for data, y, y_digit, _ in test_loader:
-            data = data.cuda()
+            data = data.to(device_cpu)
+
             mean, _, _ = vae.inference(data)
             X_test_mu.extend(mean.cpu().numpy())
             y_test.extend(y.cpu().numpy())
@@ -299,9 +312,12 @@ def test_linear_probe(vae):
 for run in range(5) :
     print(run)
     # define the models
-    factor_classifier = FactorClassifier(common_size + salient_size).float().cuda()
-    common_classifier = Classifier(common_size).float().cuda()
-    vae = ShallowDisVAE(common_size+salient_size).float().cuda()
+    factor_classifier = FactorClassifier(common_size + salient_size).float().to(device_cpu)
+
+    common_classifier = Classifier(common_size).float().to(device_cpu)
+
+    vae = ShallowDisVAE(common_size+salient_size).float().to(device_cpu)
+
 
     for epoch in range(1, 251):
         # redefine optimizers at each epoch lead to better results

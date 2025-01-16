@@ -16,6 +16,9 @@ from warnings import simplefilter
 from sklearn.exceptions import ConvergenceWarning
 simplefilter("ignore", category=ConvergenceWarning)
 
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 # load data
 X_train = np.load('./celeba/X_train_celeba.npy').transpose(0, 3, 1, 2) / 255.
 X_test = np.load('./celeba/X_test_celeba.npy').transpose(0, 3, 1, 2) / 255.
@@ -111,8 +114,8 @@ def train(epoch, vae, optimizer, factor_optimizer):
     vae.train()
     train_loss = 0
     for batch_idx, (data, y) in enumerate(train_loader):
-        data = data.cuda()
-        y = y.cuda()
+        data = data.to(device)
+        y = y.to(device)
         y=(y>0.5).float()
 
         # independent optimizer training
@@ -162,8 +165,8 @@ def test(vae):
     vae.eval()
     with torch.no_grad():
         for data, y in test_loader:
-            data = data.cuda()
-            y = y.cuda()
+            data = data.to(device)
+            y = y.to(device)
             y=(y>0.5).float()
 
             z_mean, z_log_var, y_pred = vae.inference(data)
@@ -206,12 +209,12 @@ def test_linear_probe(vae, train_loader, test_loader):
         y_train_subtype = []
         y_test_subtype = []
         for data, target in train_loader:
-            data = data.cuda()
+            data = data.to(device)
             mean, _, _ = vae.inference(data)
             X_train_mu.extend(mean.cpu().numpy())
             y_train_subtype.extend(target.cpu().numpy())
         for data, target in test_loader:
-            data = data.cuda()
+            data = data.to(device)
             mean, _, _ = vae.inference(data)
             X_test_mu.extend(mean.cpu().numpy())
             y_test_subtype.extend(target.cpu().numpy())
@@ -243,10 +246,10 @@ for run in range(5) :
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=512)
 
     # define the models
-    factor_classifier = FactorClassifier(common_size + salient_size).float().cuda()
-    common_classifier = Classifier(common_size).float().cuda()
-    specific_classifier = Classifier(salient_size).float().cuda()
-    vae = ShallowDisVAE(common_size, salient_size).float().cuda()
+    factor_classifier = FactorClassifier(common_size + salient_size).float().to(device)
+    common_classifier = Classifier(common_size).float().to(device)
+    specific_classifier = Classifier(salient_size).float().to(device)
+    vae = ShallowDisVAE(common_size, salient_size).float().to(device)
 
     for epoch in range(1,201):
         # redefine optimizers at each epoch lead to better results
